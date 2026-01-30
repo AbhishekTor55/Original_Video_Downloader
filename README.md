@@ -8,6 +8,7 @@ A simple Flask-based web interface to download YouTube or Instagram videos and p
 - Playlist download (saved as folder)
 - MP4 output
 - Mobile friendly (Termux compatible)
+- Linux System ( compatible )
 
 ## Requirements
 - Python 3.9+
