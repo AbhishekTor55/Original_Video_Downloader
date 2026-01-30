@@ -28,9 +28,10 @@ Private videos are NOT supported
 pip install -r requirements.txt
 python app.py
 
-
+Open This Address To Your Browser 
 http://127.0.0.1:8080
-=======
+
+
 # Original_Video_Downloader
 yt-web-downloader
->>>>>>> 9b215b149849f01769a510abf11707fc34786949
+
