@@ -14,18 +14,20 @@ A simple Flask-based web interface to download YouTube or Instagram videos and p
 - Flask
 - yt-dlp
 
+## Notes 
+
+Playlist downloads are saved as folders
+
+Private videos are NOT supported
+
+
+
 ## Installation
 
 ```bash
 pip install -r requirements.txt
 python app.py
 
-
-Notes
-
-Playlist downloads are saved as folders
-
-Private videos are NOT supported
 
 http://127.0.0.1:8080
 =======
