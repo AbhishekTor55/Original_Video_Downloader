@@ -31,8 +31,3 @@ python app.py
 
 Open This Address To Your Browser 
 http://127.0.0.1:8080
-
-
-# Original_Video_Downloader
-yt-web-downloader
-
