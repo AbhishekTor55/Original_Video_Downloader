@@ -1,0 +1,7 @@
+yt-web-downloader/
+├── app.py
+├── requirements.txt
+├── README.md
+├── templates/
+│   └── index.html
+├── .gitignore

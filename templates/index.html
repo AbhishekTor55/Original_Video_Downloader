@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MP4 Downloader</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+
+<h2>YouTube / Instagram MP4 Downloader</h2>
+
+<form method="POST">
+    <input type="url" name="url" placeholder="Paste video link here" required style="width:100%">
+    <br><br>
+    <button type="submit">Download</button>
+</form>
+
+{% if video %}
+<hr>
+<h3>Video Info</h3>
+<p><b>Title:</b> {{ video.title }}</p>
+<p><b>Uploader:</b> {{ video.uploader }}</p>
+<p><b>Duration:</b> {{ video.duration }} sec</p>
+
+<a href="/download/{{ file }}">⬇ Download MP4</a>
+{% endif %}
+
+{% if error %}
+<p style="color:red">{{ error }}</p>
+{% endif %}
+
+</body>
+</html>
