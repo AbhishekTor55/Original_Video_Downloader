@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+HEAD
 # YouTube / Instagram MP4 Web Downloader
 
 A simple Flask-based web interface to download YouTube or Instagram videos and playlists using yt-dlp.
