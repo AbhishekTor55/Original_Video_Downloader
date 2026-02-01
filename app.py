@@ -1,83 +1,80 @@
-from flask import Flask, render_template, request, send_file
+from flask import Flask, render_template, request, jsonify
 import yt_dlp
 import os
-import sys
-from werkzeug.utils import secure_filename
+import re
 
 app = Flask(__name__)
 
-# ---------- PATH AUTO-DETECT ----------
-def get_video_dir():
-    # Termux detection
-    if "com.termux" in os.environ.get("PREFIX", ""):
-        return "/sdcard/Movies"
-    # Linux / PC
-    return os.path.join(os.path.expanduser("~"), "Downloads", "video_downloader")
+DOWNLOAD_DIR = "downloads"
+os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
+progress_data = {
+    "status": "idle",
+    "percent": 0
+}
 
-VIDEO_DIR = get_video_dir()
-os.makedirs(VIDEO_DIR, exist_ok=True)
+def progress_hook(d):
+    if d['status'] == 'downloading':
+        total = d.get('total_bytes') or d.get('total_bytes_estimate')
+        downloaded = d.get('downloaded_bytes', 0)
+        if total:
+            progress_data["percent"] = int(downloaded * 100 / total)
+            progress_data["status"] = "downloading"
 
+    elif d['status'] == 'finished':
+        progress_data["percent"] = 100
+        progress_data["status"] = "finished"
 
-# ---------- DOWNLOAD FUNCTION ----------
-def download_video(url):
-    ydl_opts = {
-        "format": "bestvideo+bestaudio/best",
-        "merge_output_format": "mp4",
-        "outtmpl": os.path.join(VIDEO_DIR, "%(title).200s.%(ext)s"),
-        "noplaylist": True,
-        "quiet": True,
-    }
+def safe_filename(s):
+    return re.sub(r'[^\w\-_\. ]', '_', s)
 
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(url, download=True)
+@app.route("/", methods=["GET"])
+def index():
+    return render_template("index.html")
 
-        filepath = ydl.prepare_filename(info)
-        filepath = os.path.splitext(filepath)[0] + ".mp4"
+@app.route("/start", methods=["POST"])
+def start_download():
+    url = request.json.get("url")
+    filetype = request.json.get("type", "mp4")
 
-        return {
-            "path": filepath,
-            "title": info.get("title"),
-            "uploader": info.get("uploader"),
-            "duration": info.get("duration"),
+    progress_data["percent"] = 0
+    progress_data["status"] = "starting"
+
+    if "youtube.com/shorts/" in url:
+        vid = url.split("/")[-1].split("?")[0]
+        url = f"https://www.youtube.com/watch?v={vid}"
+
+    outtmpl = f"{DOWNLOAD_DIR}/%(title)s.%(ext)s"
+
+    if filetype == "mp3":
+        ydl_opts = {
+            "format": "bestaudio/best",
+            "outtmpl": outtmpl,
+            "progress_hooks": [progress_hook],
+            "postprocessors": [{
+                "key": "FFmpegExtractAudio",
+                "preferredcodec": "mp3",
+                "preferredquality": "192",
+            }],
+            "quiet": True
+        }
+    else:
+        ydl_opts = {
+            "format": "bestvideo+bestaudio/best",
+            "merge_output_format": "mp4",
+            "outtmpl": outtmpl,
+            "progress_hooks": [progress_hook],
+            "quiet": True
         }
 
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        ydl.download([url])
 
-# ---------- ROUTES ----------
-@app.route("/", methods=["GET", "POST"])
-def index():
-    error = None
-    video = None
+    return jsonify({"status": "started"})
 
-    if request.method == "POST":
-        url = request.form.get("url", "").strip()
+@app.route("/progress")
+def progress():
+    return jsonify(progress_data)
 
-        if not url.startswith(("http://", "https://")):
-            error = "Invalid URL"
-        else:
-            try:
-                video = download_video(url)
-            except Exception as e:
-                error = str(e)
-
-    return render_template("index.html", video=video, error=error)
-
-
-@app.route("/download")
-def download():
-    path = request.args.get("path")
-
-    if not path or not os.path.exists(path):
-        return "File not found", 404
-
-    return send_file(
-        path,
-        as_attachment=True,
-        download_name=secure_filename(os.path.basename(path)),
-    )
-
-
-# ---------- RUN ----------
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=80, debug=True)
-
+    app.run(host="0.0.0.0", port=5000, debug=True)
